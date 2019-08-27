@@ -5,18 +5,10 @@ const todoForm = document.querySelector(".js-todoForm"),
   todoList_life = document.querySelector(".js-toDoList__life");
 
 const TODOS_LS = "todo"; // local storage
-let todo = {
-  work: [
-    //{id:1, text:"work todo 1", due:"2019/09/03"},
-  ],
-  personal: [
-    //{id:1, text:"personal todo 1", due:"2019/09/03"},
-  ],
-  life: [
-    //{id:1, text:"life todo 1", due:"2019/09/03"},
-  ]
-};
-
+const WORK = "work";
+const PERSONAL = "personal";
+const LIFE = "life";
+let todo = [];
 /*
 cut sub-string in text
 
@@ -43,20 +35,14 @@ function loadTodo() {
   if (parseTodo !== null) {
     //console.log(parseTodo);
     if (parseTodo.work !== null) {
-      parseTodo.work.forEach(function(todo) {
-        registerTodo(todo.text, 0);
-      });
-    }
-
-    if (parseTodo.personal !== null) {
-      parseTodo.personal.forEach(function(todo) {
-        registerTodo(todo.text, 1);
-      });
-    }
-
-    if (parseTodo.life !== null) {
-      parseTodo.life.forEach(function(todo) {
-        registerTodo(todo.text, 2);
+      parseTodo.forEach(function(todo) {
+        if (todo.category == WORK) {
+          registerTodo(todo.text, WORK);
+        } else if (todo.category == PERSONAL) {
+          registerTodo(todo.text, PERSONAL);
+        } else if (todo.category == LIFE) {
+          registerTodo(todo.text, LIFE);
+        }
       });
     }
   }
@@ -66,28 +52,28 @@ function doneTodo(event) {
   const btn = event.target;
   const li = btn.parentNode;
   const div = li.parentNode;
+  let updateTodo;
+
   div.removeChild(li);
-  if (div.className.includes("work")) {
-    const updateTodo = todo.work.filter(function(todo) {
+
+  if (div.className.includes(WORK)) {
+    updateTodo = todo.filter(function(todo) {
       return parseInt(todo.id) !== parseInt(li.id);
     });
-    todo.work = updateTodo;
-  }
-
-  if (div.className.includes("personal")) {
-    const updateTodo = todo.personal.filter(function(todo) {
-      return todo.personal.id !== parseInt(li.id);
+    //todo = updateTodo;
+  } else if (div.className.includes(PERSONAL)) {
+    updateTodo = todo.filter(function(todo) {
+      return parseInt(todo.id) !== parseInt(li.id);
     });
-    todo.personal = updateTodo;
-  }
-
-  if (div.className.includes("life")) {
-    const updateTodo = todo.life.filter(function(todo) {
-      return todo.life.id !== parseInt(li.id);
+    //todo = updateTodo;
+  } else if (div.className.includes(LIFE)) {
+    updateTodo = todo.filter(function(todo) {
+      return parseInt(todo.id) !== parseInt(li.id);
     });
-    todo.life = updateTodo;
+    //todo = updateTodo;
   }
 
+  todo = updateTodo;
   saveTodo();
 }
 
@@ -96,14 +82,17 @@ function saveTodo() {
   localStorage.setItem(TODOS_LS, JSON.stringify(todo));
 }
 
-function parseTodoText(text, li, span_text, span_due, index) {
+function parseTodoText(text, li, span_text, span_due, loaded_category) {
   const reg_due1 = new RegExp("\\!\\d+/\\d+", "g"); //"test !08/03"
   const reg_due2 = new RegExp("\\!\\d+(d|w)", "g"); //"test !12w"
-
+  let category;
   // distingush categoty
-  if (text.includes("@w") || text.includes("@work") || index == 0) {
+  if (
+    text.includes("@w") ||
+    text.includes("@work") ||
+    loaded_category == WORK
+  ) {
     //console.log("@work");
-    li.id = todo.work.length + 1;
 
     // check duedate
     if (text.match(reg_due1) !== null) {
@@ -117,29 +106,32 @@ function parseTodoText(text, li, span_text, span_due, index) {
     span_text.innerText = stringCut(text, ["@work", "@w"]);
 
     todoList_work.appendChild(li);
-    todo.work.push({
-      id: li.id,
-      text: span_text.innerText,
-      due: span_due.innerText
-    });
-  } else if (text.includes("@p") || text.includes("@personal") || index == 1) {
+    category = WORK;
+  } else if (
+    text.includes("@p") ||
+    text.includes("@personal") ||
+    loaded_category == PERSONAL
+  ) {
     //console.log("@personal");
-    li.id = todo.personal.length + 1;
     span_text.innerText = stringCut(text, ["@personal", "@p"]);
     todoList_personal.appendChild(li);
-    todo.personal.push({ id: li.id, text: span_text.innerText });
+    category = PERSONAL;
   } else {
     // default is life
-    //if (text.includes("@l") || text.includes("@life")) {
-    //console.log("@life");
-    li.id = todo.life.length + 1;
     span_text.innerText = stringCut(text, ["@life", "@l"]);
     todoList_life.appendChild(li);
-    todo.life.push({ id: li.id, text: span_text.innerText });
+    category = LIFE;
   }
+
+  todo.push({
+    id: li.id,
+    text: span_text.innerText,
+    due: span_due.innerText,
+    category: category
+  });
 }
 
-function registerTodo(text, index) {
+function registerTodo(text, category) {
   const li = document.createElement("li");
   const delBtn = document.createElement("button");
   const span_text = document.createElement("span");
@@ -148,14 +140,14 @@ function registerTodo(text, index) {
   delBtn.innerText = "Done";
   delBtn.addEventListener("click", doneTodo);
   //span.innerText = text;
-
+  li.id = todo.length + 1;
   li.appendChild(span_text);
   li.appendChild(span_due);
   li.appendChild(delBtn);
 
-  parseTodoText(text, li, span_text, span_due, index);
+  parseTodoText(text, li, span_text, span_due, category);
 
-  if (index === -1) {
+  if (category === -1) {
     saveTodo();
   }
 }
