@@ -9,6 +9,9 @@ const WORK = "work";
 const PERSONAL = "personal";
 const LIFE = "life";
 let todo = [];
+
+const WORK_START_TIME=9
+const WORK_END_TIME=18
 /*
 cut sub-string in text
 
@@ -82,10 +85,12 @@ function saveTodo() {
   localStorage.setItem(TODOS_LS, JSON.stringify(todo));
 }
 
+
 function parseTodoText(text, li, span_text, span_due, loaded_category) {
   const reg_due1 = new RegExp("\\!\\d+/\\d+", "g"); //"test !08/03"
-  const reg_due2 = new RegExp("\\!\\d+(d|w)", "g"); //"test !12w"
   let category;
+  let currentDate;
+
   // distingush categoty
   if (
     text.includes("@w") ||
@@ -96,11 +101,12 @@ function parseTodoText(text, li, span_text, span_due, loaded_category) {
 
     // check duedate
     if (text.match(reg_due1) !== null) {
-      span_due.innerText = text.match(reg_due1);
-      text = text.replace(reg_due1, "");
-    } else if (text.match(reg_due2) !== null) {
-      span_due.innerText = text.match(reg_due2);
-      text = text.replace(reg_due2, "");
+      due = text.match(reg_due1).join();
+
+      text = text.replace(due,"");
+      
+      due = due.replace("!", ""); //remove !
+      span_due.innerText = due;
     }
 
     span_text.innerText = stringCut(text, ["@work", "@w"]);
@@ -162,6 +168,15 @@ function handleSubmit(event) {
 function init() {
   loadTodo();
   todoForm.addEventListener("submit", handleSubmit);
+  
+  time = new Date().getHours();
+  
+  if(time > WORK_START_TIME && time < WORK_END_TIME) {
+    todoList_personal.style.opacity = 0.5;
+    todoList_life.style.opacity = 0.5;
+  }else{
+    todoList_work.style.opacity = 0.5;
+  }
 }
 
 init();
