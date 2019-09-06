@@ -37,17 +37,15 @@ function loadTodo() {
 
   if (parseTodo !== null) {
     //console.log(parseTodo);
-    if (parseTodo.work !== null) {
       parseTodo.forEach(function(todo) {
         if (todo.category == WORK) {
-          registerTodo(todo.text, WORK);
+          registerTodo(todo.text, todo.due, WORK);
         } else if (todo.category == PERSONAL) {
-          registerTodo(todo.text, PERSONAL);
+          registerTodo(todo.text, todo.due, PERSONAL);
         } else if (todo.category == LIFE) {
-          registerTodo(todo.text, LIFE);
+          registerTodo(todo.text, todo.due, LIFE);
         }
       });
-    }
   }
 }
 
@@ -91,6 +89,17 @@ function parseTodoText(text, li, span_text, span_due, loaded_category) {
   let category;
   let currentDate;
 
+
+    // check duedate
+    if (text.match(reg_due1) !== null) {
+      due = text.match(reg_due1).join();
+
+      text = text.replace(due,"");
+
+      due = due.replace("!", ""); //remove !
+      span_due.innerText = due;
+    }
+
   // distingush categoty
   if (
     text.includes("@w") ||
@@ -98,16 +107,6 @@ function parseTodoText(text, li, span_text, span_due, loaded_category) {
     loaded_category == WORK
   ) {
     //console.log("@work");
-
-    // check duedate
-    if (text.match(reg_due1) !== null) {
-      due = text.match(reg_due1).join();
-
-      text = text.replace(due,"");
-      
-      due = due.replace("!", ""); //remove !
-      span_due.innerText = due;
-    }
 
     span_text.innerText = stringCut(text, ["@work", "@w"]);
 
@@ -137,12 +136,11 @@ function parseTodoText(text, li, span_text, span_due, loaded_category) {
   });
 }
 
-function registerTodo(text, category) {
+function registerTodo(text, due, category) {
   const li = document.createElement("li");
   const delBtn = document.createElement("button");
   const span_text = document.createElement("span");
   const span_due = document.createElement("span");
-
   delBtn.innerText = "Done";
   delBtn.addEventListener("click", doneTodo);
   //span.innerText = text;
@@ -151,6 +149,9 @@ function registerTodo(text, category) {
   li.appendChild(span_due);
   li.appendChild(delBtn);
 
+  if(due!=""){
+    span_due.innerText = due;
+  }
   parseTodoText(text, li, span_text, span_due, category);
 
   if (category === -1) {
@@ -161,7 +162,7 @@ function registerTodo(text, category) {
 function handleSubmit(event) {
   event.preventDefault();
   const inputText = todoInput.value;
-  registerTodo(inputText, -1);
+  registerTodo(inputText, "", -1);
   todoInput.value = "";
 }
 
