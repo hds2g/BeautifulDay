@@ -1,2 +1,3 @@
 # BeautifulDay
- Organize Day Beautifully
+ 
+ Todo by Javascript: local version
