@@ -12,14 +12,15 @@ let todo = [];
 
 const WORK_START_TIME=9
 const WORK_END_TIME=18
+
+const DIM_CATEGORY_OPACITY=0.5
+
 /*
 cut sub-string in text
 
 a = "test aa test"
 when you cut "aa" in a,
 call stringCut(a, "aa");
-
-
 */
 function stringCut(oriText, delText) {
   for (i = 0; i < delText.length; i++) {
@@ -38,13 +39,7 @@ function loadTodo() {
   if (parseTodo !== null) {
     //console.log(parseTodo);
       parseTodo.forEach(function(todo) {
-        if (todo.category == WORK) {
-          registerTodo(todo.text, todo.due, WORK);
-        } else if (todo.category == PERSONAL) {
-          registerTodo(todo.text, todo.due, PERSONAL);
-        } else if (todo.category == LIFE) {
-          registerTodo(todo.text, todo.due, LIFE);
-        }
+          registerTodo(todo);
       });
   }
 }
@@ -136,7 +131,7 @@ function parseTodoText(text, li, span_text, span_due, loaded_category) {
   });
 }
 
-function registerTodo(text, due, category) {
+function registerTodo(...todoArgs) {
   const li = document.createElement("li");
   const delBtn = document.createElement("button");
   const span_text = document.createElement("span");
@@ -149,12 +144,20 @@ function registerTodo(text, due, category) {
   li.appendChild(span_due);
   li.appendChild(delBtn);
 
-  if(due!=""){
+  let text = todoArgs[0].text;
+  const due = todoArgs[0].due;
+  const category = todoArgs[0].category;
+
+  if(text == undefined) {
+    text = todoArgs[0];
+  }
+
+  if(due != undefined){
     span_due.innerText = due;
   }
   parseTodoText(text, li, span_text, span_due, category);
 
-  if (category === -1) {
+  if (category === undefined) {
     saveTodo();
   }
 }
@@ -162,22 +165,27 @@ function registerTodo(text, due, category) {
 function handleSubmit(event) {
   event.preventDefault();
   const inputText = todoInput.value;
-  registerTodo(inputText, "", -1);
+  registerTodo(inputText);
   todoInput.value = "";
+}
+
+function highlightCategory() {
+  time = new Date().getHours();
+  
+  // highlight 
+  if(time > WORK_START_TIME && time < WORK_END_TIME) {
+    todoList_personal.style.opacity = DIM_CATEGORY_OPACITY;
+    todoList_life.style.opacity = DIM_CATEGORY_OPACITY;
+  }else{
+    todoList_work.style.opacity = DIM_CATEGORY_OPACITY;
+  }
 }
 
 function init() {
   loadTodo();
   todoForm.addEventListener("submit", handleSubmit);
   
-  time = new Date().getHours();
-  
-  if(time > WORK_START_TIME && time < WORK_END_TIME) {
-    todoList_personal.style.opacity = 0.5;
-    todoList_life.style.opacity = 0.5;
-  }else{
-    todoList_work.style.opacity = 0.5;
-  }
+  highlightCategory();
 }
 
 init();
