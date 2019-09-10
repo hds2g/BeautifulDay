@@ -15,6 +15,11 @@ const WORK_END_TIME=18
 
 const DIM_CATEGORY_OPACITY=0.5
 
+
+const WORK_PHRASES = ["@work", "@WORK", "@wo", "@WO", "@w", "@W"];
+const PERSONAL_PHRASES = ["@personal", "@PERSONAL", "@pe", "@PE","@p", "@P"];
+const LIFE_PHRASES = ["@life", "@LIFE", "@li", "@LI","@l", "@L"];
+
 /*
 cut sub-string in text
 
@@ -78,6 +83,33 @@ function saveTodo() {
   localStorage.setItem(TODOS_LS, JSON.stringify(todo));
 }
 
+function checkCategory(text) {
+  let result = [];
+
+  result.push(WORK_PHRASES.reduce((acc, cur, i) => {
+    return acc + text.includes(cur)
+  }, 0));
+
+  result.push(PERSONAL_PHRASES.reduce((acc, cur, i) => {
+    return acc + text.includes(cur)
+  }, 0));
+
+  result.push(LIFE_PHRASES.reduce((acc, cur, i) => {
+    return acc + text.includes(cur)
+  }, 0));
+
+  if( result[0] >= 1) {
+    return WORK;
+  }else if( result[1] >= 1){
+    return PERSONAL;
+  }else if( result[2] >= 2){
+    return LIFE;
+  }else{
+    return 0;
+  }
+}
+
+
 
 function parseTodoText(text, li, span_text, span_due, loaded_category) {
   const reg_due1 = new RegExp("\\!\\d+/\\d+", "g"); //"test !08/03"
@@ -88,37 +120,23 @@ function parseTodoText(text, li, span_text, span_due, loaded_category) {
     // check duedate
     if (text.match(reg_due1) !== null) {
       due = text.match(reg_due1).join();
-
       text = text.replace(due,"");
-
       due = due.replace("!", ""); //remove !
       span_due.innerText = due;
     }
 
   // distingush categoty
-  if (
-    text.includes("@w") ||
-    text.includes("@work") ||
-    loaded_category == WORK
-  ) {
-    //console.log("@work");
-
-    span_text.innerText = stringCut(text, ["@work", "@w"]);
-
+  if (checkCategory(text) == WORK || loaded_category == WORK) {
+    span_text.innerText = stringCut(text, WORK_PHRASES);
     todoList_work.appendChild(li);
     category = WORK;
-  } else if (
-    text.includes("@p") ||
-    text.includes("@personal") ||
-    loaded_category == PERSONAL
-  ) {
-    //console.log("@personal");
-    span_text.innerText = stringCut(text, ["@personal", "@p"]);
+  } else if (checkCategory(text) == PERSONAL || loaded_category == PERSONAL) {
+    span_text.innerText = stringCut(text, PERSONAL_PHRASES);
     todoList_personal.appendChild(li);
     category = PERSONAL;
   } else {
     // default is life
-    span_text.innerText = stringCut(text, ["@life", "@l"]);
+    span_text.innerText = stringCut(text, LIFE_PHRASES);
     todoList_life.appendChild(li);
     category = LIFE;
   }
@@ -155,6 +173,7 @@ function registerTodo(...todoArgs) {
   if(due != undefined){
     span_due.innerText = due;
   }
+
   parseTodoText(text, li, span_text, span_due, category);
 
   if (category === undefined) {
