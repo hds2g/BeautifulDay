@@ -109,8 +109,6 @@ function checkCategory(text) {
   }
 }
 
-
-
 function parseTodoText(text, li, span_text, span_due, loaded_category) {
   const reg_due1 = new RegExp("\\!\\d+/\\d+", "g"); //"test !08/03"
   let category;
