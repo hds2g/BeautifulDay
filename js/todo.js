@@ -49,12 +49,66 @@ function loadTodo() {
   }
 }
 
+
+function modifyTodo(event) {
+  const btn = event.target;
+  const li = btn.parentNode;
+  const children = li.childNodes;
+  
+  const form = document.createElement("form");
+  const editText = document.createElement("input");
+  let oldText, oldDue;
+
+  const todoID = li.getAttribute('id');
+  console.log(todo[todoID].text, todo[todoID].due);
+
+  if(li.hasChildNodes()) {
+      for (let i = 0; i < children.length; i++) {
+        if(children[i].className.includes("text")) {
+          children[i].style.display='none';
+
+          editText.setAttribute("type", "text");
+          editText.setAttribute("name", "text");
+          editText.value = children[i].innerText;
+          oldText = children[i].innerText;
+          form.appendChild(editText);
+          li.appendChild(form);
+        }
+
+        if(children[i].className.includes("due")) {
+          children[i].style.display='none';
+          oldDue = children[i].innerText;
+        }
+
+        if(children[i].className.includes("delBtn")) {
+          children[i].style.display='none';
+        }
+
+        if(children[i].className.includes("modifyBtn")) {
+            children[i].style.display='none';
+        }
+      }
+  }
+
+  editText.setAttribute("placeholder", oldText+" "+oldDue);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    console.log(editText.value);
+    
+    [todo[todoID].text, todo[todoID].due] = parseDue(editText.value);
+    saveTodo();
+    
+    li.style.display = 'none';
+    location.reload();
+  });
+}
+
 function doneTodo(event) {
   const btn = event.target;
   const li = btn.parentNode;
   const div = li.parentNode;
   let updateTodo;
-
+  
   div.removeChild(li);
 
   if (div.className.includes(WORK)) {
@@ -79,7 +133,6 @@ function doneTodo(event) {
 }
 
 function saveTodo() {
-  //onsole.log(todo);
   localStorage.setItem(TODOS_LS, JSON.stringify(todo));
 }
 
@@ -109,19 +162,31 @@ function checkCategory(text) {
   }
 }
 
-function parseTodoText(text, li, span_text, span_due, loaded_category) {
+function parseDue(text) {
+  let due="";
+  let newText=text;
   const reg_due1 = new RegExp("\\!\\d+/\\d+", "g"); //"test !08/03"
+
+  // check duedate
+  if (text.match(reg_due1) !== null) {
+    due = text.match(reg_due1).join();
+    newText = text.replace(due,"");
+    due = due.replace("!", ""); //remove !
+    return [newText, due];
+  }
+  return [text, due];
+}
+
+
+
+function parseTodoText(text, li, span_text, span_due, loaded_category) {
+  
   let category;
   let currentDate;
 
-
-    // check duedate
-    if (text.match(reg_due1) !== null) {
-      due = text.match(reg_due1).join();
-      text = text.replace(due,"");
-      due = due.replace("!", ""); //remove !
-      span_due.innerText = due;
-    }
+  if(span_due.innerText === "") {
+    [text, span_due.innerText] = parseDue(text);
+  }
 
   // distingush categoty
   if (checkCategory(text) == WORK || loaded_category == WORK) {
@@ -150,14 +215,26 @@ function parseTodoText(text, li, span_text, span_due, loaded_category) {
 function registerTodo(...todoArgs) {
   const li = document.createElement("li");
   const delBtn = document.createElement("button");
+  const modifyBtn = document.createElement("button");
   const span_text = document.createElement("span");
   const span_due = document.createElement("span");
   delBtn.innerText = "Done";
   delBtn.addEventListener("click", doneTodo);
+
+  modifyBtn.innerText = "Modify";
+  modifyBtn.addEventListener("click", modifyTodo);
+
+  // set ClassName
+  span_text.className = "text";
+  span_due.className  = "due";
+  delBtn.className = "delBtn";
+  modifyBtn.className = "modifyBtn";
+
   //span.innerText = text;
-  li.id = todo.length + 1;
+  li.id = todo.length;
   li.appendChild(span_text);
   li.appendChild(span_due);
+  li.appendChild(modifyBtn);
   li.appendChild(delBtn);
 
   let text = todoArgs[0].text;
@@ -179,17 +256,9 @@ function registerTodo(...todoArgs) {
   }
 }
 
-function handleSubmit(event) {
-  event.preventDefault();
-  const inputText = todoInput.value;
-  registerTodo(inputText);
-  todoInput.value = "";
-}
-
 function highlightCategory() {
   time = new Date().getHours();
   
-  // highlight 
   if(time > WORK_START_TIME && time < WORK_END_TIME) {
     todoList_personal.style.opacity = DIM_CATEGORY_OPACITY;
     todoList_life.style.opacity = DIM_CATEGORY_OPACITY;
@@ -200,7 +269,12 @@ function highlightCategory() {
 
 function init() {
   loadTodo();
-  todoForm.addEventListener("submit", handleSubmit);
+  todoForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const inputText = todoInput.value;
+    registerTodo(inputText);
+    todoInput.value = "";
+  });
   
   highlightCategory();
 }
